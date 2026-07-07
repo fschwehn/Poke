@@ -90,12 +90,12 @@ public struct HTTPClient<RequestEncoder: TopLevelEncoder & Sendable, ResponseDec
         do {
             (data, urlResponse) = try await urlSession.data(for: urlRequest)
         } catch {
-            throw .networkgingFailed(request: request, error: error)
+            throw .networkingFailed(request: request, error: error)
         }
 
         guard let httpUrlResponse = urlResponse as? HTTPURLResponse else {
             logger.error("Received non-HTTP URL response: \(urlResponse)")
-            throw .noHttpUrlResponse(request: request, urlReponse: urlResponse, data: data)
+            throw .noHttpUrlResponse(request: request, urlResponse: urlResponse, data: data)
         }
 
         let response = HTTPResponse(
