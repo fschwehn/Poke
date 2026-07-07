@@ -12,7 +12,7 @@ public struct HTTPClient<RequestEncoder: TopLevelEncoder & Sendable, ResponseDec
     let responseDecoder: ResponseDecoder
     let urlSession: URLSession
 
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "-", category: "HTTPClient")
+    private let logger = Logger(subsystem: "Poke", category: "HTTPClient")
 
     public init(
         baseUrl: URL,
