@@ -62,3 +62,7 @@ let created: User = try await client.send(
 
 Non-2xx responses, transport failures, and encoding/decoding problems are all surfaced as
 `HTTPError`.
+
+## License
+
+Poke is available under the MIT license. See [LICENSE](LICENSE) for details.
