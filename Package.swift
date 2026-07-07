@@ -15,5 +15,5 @@ let package = Package(
     targets: [
         .target(name: "Poke"),
         .testTarget(name: "PokeTests", dependencies: ["Poke"]),
-    ]
+    ],
 )

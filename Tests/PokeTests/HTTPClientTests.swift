@@ -4,12 +4,12 @@ import Testing
 
 @Suite(.serialized)
 struct HTTPClientTests {
-    struct Widget: Codable, Sendable, Equatable {
+    struct Widget: Codable, Equatable {
         let id: Int
         let name: String
     }
 
-    struct Ack: Codable, Sendable {
+    struct Ack: Codable {
         let ok: Bool
     }
 
@@ -50,7 +50,7 @@ struct HTTPClientTests {
 
         MockURLProtocol.requestHandler = { request in
             recorder.request = request
-            return (self.makeResponse(url: request.url!, statusCode: 200), try JSONEncoder().encode(widget))
+            return try (makeResponse(url: request.url!, statusCode: 200), JSONEncoder().encode(widget))
         }
 
         let result: Widget = try await makeClient().send(path: "widgets/42")
@@ -68,7 +68,7 @@ struct HTTPClientTests {
 
         MockURLProtocol.requestHandler = { request in
             recorder.request = request
-            return (self.makeResponse(url: request.url!, statusCode: 201), Data(#"{"ok":true}"#.utf8))
+            return (makeResponse(url: request.url!, statusCode: 201), Data(#"{"ok":true}"#.utf8))
         }
 
         let ack: Ack = try await makeClient().send(method: .post, path: "widgets", body: widget)
@@ -87,7 +87,7 @@ struct HTTPClientTests {
 
         MockURLProtocol.requestHandler = { request in
             recorder.request = request
-            return (self.makeResponse(url: request.url!, statusCode: 200), Data("[]".utf8))
+            return (makeResponse(url: request.url!, statusCode: 200), Data("[]".utf8))
         }
 
         let _: [Widget] = try await makeClient().send(path: "widgets", query: [
@@ -106,7 +106,7 @@ struct HTTPClientTests {
     @Test
     func `non-2xx status throws statusCodeValidationFailed`() async throws {
         MockURLProtocol.requestHandler = { request in
-            (self.makeResponse(url: request.url!, statusCode: 404), Data("not found".utf8))
+            (makeResponse(url: request.url!, statusCode: 404), Data("not found".utf8))
         }
 
         let client = makeClient()
@@ -126,7 +126,7 @@ struct HTTPClientTests {
     @Test
     func `malformed body throws decodingFailed`() async throws {
         MockURLProtocol.requestHandler = { request in
-            (self.makeResponse(url: request.url!, statusCode: 200), Data("not json".utf8))
+            (makeResponse(url: request.url!, statusCode: 200), Data("not json".utf8))
         }
 
         let client = makeClient()
