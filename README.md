@@ -60,6 +60,10 @@ let created: User = try await client.send(
 )
 ```
 
+When a `body` is sent, `Content-Type` defaults to `application/json`. Override it per call with
+the `contentType:` parameter, or set your own `Content-Type` in the client-wide `headers` and it
+will be left untouched.
+
 Non-2xx responses, transport failures, and encoding/decoding problems are all surfaced as
 `HTTPError`.
 

@@ -82,6 +82,34 @@ struct HTTPClientTests {
     }
 
     @Test
+    func `a request with a body sets Content-Type`() async throws {
+        let recorder = Recorder()
+
+        MockURLProtocol.requestHandler = { request in
+            recorder.request = request
+            return (self.makeResponse(url: request.url!, statusCode: 200), Data(#"{"ok":true}"#.utf8))
+        }
+
+        let _: Ack = try await makeClient().send(method: .post, path: "widgets", body: Widget(id: 1, name: "cog"))
+
+        #expect(recorder.request?.value(forHTTPHeaderField: "Content-Type") == "application/json")
+    }
+
+    @Test
+    func `a bodiless request does not set Content-Type`() async throws {
+        let recorder = Recorder()
+
+        MockURLProtocol.requestHandler = { request in
+            recorder.request = request
+            return (self.makeResponse(url: request.url!, statusCode: 200), try JSONEncoder().encode(Widget(id: 1, name: "cog")))
+        }
+
+        let _: Widget = try await makeClient().send(path: "widgets/1")
+
+        #expect(recorder.request?.value(forHTTPHeaderField: "Content-Type") == nil)
+    }
+
+    @Test
     func `query items are appended to the URL`() async throws {
         let recorder = Recorder()
 
