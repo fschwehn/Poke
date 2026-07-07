@@ -33,6 +33,7 @@ public struct HTTPClient<RequestEncoder: TopLevelEncoder & Sendable, ResponseDec
         path: String,
         query: [URLQueryItem]? = nil,
         body: (any HTTPRequestEncodable)? = nil,
+        contentType: String = "application/json",
         as _: Response.Type = Response.self,
     ) async throws(HTTPError) -> Response {
         var url = baseUrl.appendingPathComponent(path)
@@ -41,6 +42,7 @@ public struct HTTPClient<RequestEncoder: TopLevelEncoder & Sendable, ResponseDec
             url.append(queryItems: query)
         }
 
+        var requestHeaders = headers
         var requestBody: Data? = nil
 
         if let body {
@@ -49,12 +51,20 @@ public struct HTTPClient<RequestEncoder: TopLevelEncoder & Sendable, ResponseDec
             } catch {
                 throw HTTPError.encodingFailed(body: body, error: error)
             }
+
+            // Set the encoder's content type for the encoded body, unless the
+            // caller already supplied one via the client-wide headers.
+            let hasContentType = requestHeaders.keys
+                .contains { $0.caseInsensitiveCompare("Content-Type") == .orderedSame }
+            if !hasContentType {
+                requestHeaders["Content-Type"] = contentType
+            }
         }
 
         let httpRequest = HTTPRequest(
             url: url,
             method: method,
-            headers: headers,
+            headers: requestHeaders,
             body: requestBody,
         )
 
