@@ -58,6 +58,10 @@ let created: User = try await client.send(
     path: "users",
     body: NewUser(name: "Ada")
 )
+
+// No response to decode: the bodiless overload validates the status code and
+// ignores the body — for 204 No Content or empty 200/201 responses.
+try await client.send(method: .delete, path: "users/42")
 ```
 
 When a `body` is sent, `Content-Type` defaults to `application/json`. Override it per call with

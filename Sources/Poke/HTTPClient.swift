@@ -36,6 +36,53 @@ public struct HTTPClient<RequestEncoder: TopLevelEncoder & Sendable, ResponseDec
         contentType: String = "application/json",
         as _: Response.Type = Response.self,
     ) async throws(HTTPError) -> Response {
+        let (httpRequest, httpResponse) = try await sendValidatingStatus(
+            method: method,
+            path: path,
+            query: query,
+            body: body,
+            contentType: contentType,
+        )
+
+        do {
+            return try responseDecoder.decode(Response.self, from: httpResponse.body)
+        } catch {
+            throw .decodingFailed(request: httpRequest, response: httpResponse, error: error)
+        }
+    }
+
+    /// Sends a request and validates the status code, ignoring the response body.
+    ///
+    /// Use this for endpoints that legitimately return no body (HTTP `204 No Content`, or a
+    /// `200`/`201` with an empty body — common for `POST`/`PUT`/`DELETE`), where there is no
+    /// `Response` to decode. A non-2xx status still throws `.statusCodeValidationFailed`.
+    public func send(
+        method: HTTPMethod = .get,
+        path: String,
+        query: [URLQueryItem]? = nil,
+        body: (any HTTPRequestEncodable)? = nil,
+        contentType: String = "application/json",
+    ) async throws(HTTPError) {
+        _ = try await sendValidatingStatus(
+            method: method,
+            path: path,
+            query: query,
+            body: body,
+            contentType: contentType,
+        )
+    }
+
+    /// Builds and sends a request, validating that the response has a 2xx status code.
+    ///
+    /// Returns both the request and response so callers can attach them to a later
+    /// `.decodingFailed` error.
+    private func sendValidatingStatus(
+        method: HTTPMethod,
+        path: String,
+        query: [URLQueryItem]?,
+        body: (any HTTPRequestEncodable)?,
+        contentType: String,
+    ) async throws(HTTPError) -> (HTTPRequest, HTTPResponse) {
         var url = baseUrl.appendingPathComponent(path)
 
         if let query {
@@ -75,11 +122,7 @@ public struct HTTPClient<RequestEncoder: TopLevelEncoder & Sendable, ResponseDec
             throw .statusCodeValidationFailed(request: httpRequest, response: httpResponse)
         }
 
-        do {
-            return try responseDecoder.decode(Response.self, from: httpResponse.body)
-        } catch {
-            throw .decodingFailed(request: httpRequest, response: httpResponse, error: error)
-        }
+        return (httpRequest, httpResponse)
     }
 
     public func send(request: HTTPRequest) async throws(HTTPError) -> HTTPResponse {

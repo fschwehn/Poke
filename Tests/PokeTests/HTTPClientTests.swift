@@ -87,7 +87,7 @@ struct HTTPClientTests {
 
         MockURLProtocol.requestHandler = { request in
             recorder.request = request
-            return (self.makeResponse(url: request.url!, statusCode: 200), Data(#"{"ok":true}"#.utf8))
+            return (makeResponse(url: request.url!, statusCode: 200), Data(#"{"ok":true}"#.utf8))
         }
 
         let _: Ack = try await makeClient().send(method: .post, path: "widgets", body: Widget(id: 1, name: "cog"))
@@ -101,7 +101,7 @@ struct HTTPClientTests {
 
         MockURLProtocol.requestHandler = { request in
             recorder.request = request
-            return (self.makeResponse(url: request.url!, statusCode: 200), try JSONEncoder().encode(Widget(id: 1, name: "cog")))
+            return try (makeResponse(url: request.url!, statusCode: 200), JSONEncoder().encode(Widget(id: 1, name: "cog")))
         }
 
         let _: Widget = try await makeClient().send(path: "widgets/1")
@@ -167,6 +167,50 @@ struct HTTPClientTests {
                 Issue.record("unexpected error: \(error)")
                 return
             }
+        }
+    }
+
+    @Test
+    func `the bodiless overload ignores a 204 No Content response`() async throws {
+        let recorder = Recorder()
+
+        MockURLProtocol.requestHandler = { request in
+            recorder.request = request
+            return (makeResponse(url: request.url!, statusCode: 204), Data())
+        }
+
+        try await makeClient().send(method: .delete, path: "widgets/1")
+
+        #expect(recorder.request?.httpMethod == "DELETE")
+        #expect(recorder.request?.url?.path == "/widgets/1")
+    }
+
+    @Test
+    func `the bodiless overload ignores an empty body`() async throws {
+        MockURLProtocol.requestHandler = { request in
+            (makeResponse(url: request.url!, statusCode: 200), Data())
+        }
+
+        try await makeClient().send(method: .post, path: "widgets", body: Widget(id: 1, name: "cog"))
+    }
+
+    @Test
+    func `the bodiless overload still validates the status code`() async throws {
+        MockURLProtocol.requestHandler = { request in
+            (makeResponse(url: request.url!, statusCode: 500), Data())
+        }
+
+        let client = makeClient()
+
+        do {
+            try await client.send(method: .delete, path: "widgets/1")
+            Issue.record("expected an error to be thrown")
+        } catch {
+            guard case let .statusCodeValidationFailed(_, response) = error else {
+                Issue.record("unexpected error: \(error)")
+                return
+            }
+            #expect(response.statusCode == 500)
         }
     }
 }
