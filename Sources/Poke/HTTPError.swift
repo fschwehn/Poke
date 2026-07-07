@@ -1,10 +1,10 @@
 import Foundation
 
 public enum HTTPError: Error {
-    case networkgingFailed(request: HTTPRequest, error: Error)
+    case networkingFailed(request: HTTPRequest, error: Error)
     case noHttpUrlResponse(
         request: HTTPRequest,
-        urlReponse: URLResponse,
+        urlResponse: URLResponse,
         data: Data,
     )
     case encodingFailed(body: any HTTPRequestEncodable, error: Error)
@@ -26,10 +26,10 @@ extension HTTPError: LocalizedError {
 
     public var failureReason: String? {
         switch self {
-        case .networkgingFailed:
+        case .networkingFailed:
             "Networking failure."
         case .noHttpUrlResponse:
-            "Networkging failure."
+            "Received a non-HTTP response."
         case .encodingFailed:
             "Failed to encode request body."
         case .decodingFailed:
