@@ -2,7 +2,7 @@ import Combine
 import Foundation
 import OSLog
 
-public struct HTTPClient<RequestEncoder: TopLevelEncoder & Sendable, ResponseDecoder: TopLevelDecoder & Sendable> where
+public struct HTTPClient<RequestEncoder: TopLevelEncoder & Sendable, ResponseDecoder: TopLevelDecoder & Sendable>: Sendable where
     RequestEncoder.Output == Data,
     ResponseDecoder.Input == Data
 {

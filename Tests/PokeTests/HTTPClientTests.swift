@@ -44,6 +44,14 @@ struct HTTPClientTests {
     }
 
     @Test
+    func `HTTPClient is Sendable`() {
+        /// Compile-time assertion: fails to build if the public conformance
+        /// is dropped or a non-Sendable stored property is introduced.
+        func requireSendable(_: some Sendable) {}
+        requireSendable(makeClient())
+    }
+
+    @Test
     func `GET decodes a typed response`() async throws {
         let widget = Widget(id: 42, name: "sprocket")
         let recorder = Recorder()
