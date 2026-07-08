@@ -44,6 +44,14 @@ struct HTTPClientTests {
     }
 
     @Test
+    func `HTTPClient is Sendable`() {
+        /// Compile-time assertion: fails to build if the public conformance
+        /// is dropped or a non-Sendable stored property is introduced.
+        func requireSendable(_: some Sendable) {}
+        requireSendable(makeClient())
+    }
+
+    @Test
     func `GET decodes a typed response`() async throws {
         let widget = Widget(id: 42, name: "sprocket")
         let recorder = Recorder()
@@ -87,7 +95,7 @@ struct HTTPClientTests {
 
         MockURLProtocol.requestHandler = { request in
             recorder.request = request
-            return (self.makeResponse(url: request.url!, statusCode: 200), Data(#"{"ok":true}"#.utf8))
+            return (makeResponse(url: request.url!, statusCode: 200), Data(#"{"ok":true}"#.utf8))
         }
 
         let _: Ack = try await makeClient().send(method: .post, path: "widgets", body: Widget(id: 1, name: "cog"))
@@ -101,7 +109,7 @@ struct HTTPClientTests {
 
         MockURLProtocol.requestHandler = { request in
             recorder.request = request
-            return (self.makeResponse(url: request.url!, statusCode: 200), try JSONEncoder().encode(Widget(id: 1, name: "cog")))
+            return try (makeResponse(url: request.url!, statusCode: 200), JSONEncoder().encode(Widget(id: 1, name: "cog")))
         }
 
         let _: Widget = try await makeClient().send(path: "widgets/1")
