@@ -11,21 +11,24 @@ public struct HTTPClient<RequestEncoder: TopLevelEncoder & Sendable, ResponseDec
     let requestEncoder: RequestEncoder
     let responseDecoder: ResponseDecoder
     let urlSession: URLSession
+    let logger: Logger
 
-    private let logger = Logger(subsystem: "Poke", category: "HTTPClient")
-
+    /// - Parameter logger: Where requests, responses and failures are logged. Pass your own to
+    ///   log under your app's subsystem.
     public init(
         baseUrl: URL,
         headers: [String: String] = [:],
         requestEncoder: RequestEncoder,
         responseDecoder: ResponseDecoder,
         urlSession: URLSession = .shared,
+        logger: Logger = Logger(subsystem: "Poke", category: "HTTPClient"),
     ) {
         self.baseUrl = baseUrl
         self.headers = headers
         self.requestEncoder = requestEncoder
         self.responseDecoder = responseDecoder
         self.urlSession = urlSession
+        self.logger = logger
     }
 
     public func send<Response: HTTPResponseDecodable>(
