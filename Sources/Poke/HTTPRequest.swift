@@ -23,10 +23,22 @@ public struct HTTPRequest: Sendable {
 }
 
 extension HTTPRequest: CustomStringConvertible {
+    /// Headers whose values `description` masks. Lowercased: header names are case-insensitive.
+    private static let credentialHeaderNames: Set<String> = [
+        "authorization",
+        "proxy-authorization",
+        "cookie",
+        "x-api-key",
+    ]
+
+    private static func isCredential(headerName: String) -> Bool {
+        credentialHeaderNames.contains(headerName.lowercased())
+    }
+
     public var description: String {
         let headers: String = headers
             .map { (name: String, value: String) in
-                let value = name == "Authorization" ? "********" : value
+                let value = Self.isCredential(headerName: name) ? "********" : value
                 return "        \(name): \(value)"
             }
             .joined(separator: "\n")
