@@ -35,7 +35,27 @@ extension HTTPError: LocalizedError {
         case .decodingFailed:
             "Failed to decode response body."
         case let .statusCodeValidationFailed(_, response):
-            "The request returned with an unexpected status code: \(response.statusCode)."
+            if let excerpt = Self.excerpt(of: response.body) {
+                "The request returned with an unexpected status code: \(response.statusCode). The server said: \(excerpt)"
+            } else {
+                "The request returned with an unexpected status code: \(response.statusCode)."
+            }
         }
+    }
+
+    /// The longest body excerpt `failureReason` shows, in characters.
+    static let maxExcerptLength = 300
+
+    /// A body as one line of text, cut to `maxExcerptLength`; `nil` for an empty or non-UTF-8 body.
+    static func excerpt(of body: Data) -> String? {
+        guard let text = String(data: body, encoding: .utf8) else { return nil }
+
+        let line = text
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
+
+        guard !line.isEmpty else { return nil }
+
+        return line.count > maxExcerptLength ? line.prefix(maxExcerptLength) + "…" : line
     }
 }
