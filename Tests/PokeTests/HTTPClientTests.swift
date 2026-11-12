@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 @testable import Poke
 import Testing
 
@@ -20,7 +21,9 @@ struct HTTPClientTests {
 
     let baseUrl = URL(string: "https://example.com")!
 
-    func makeClient() -> HTTPClient<JSONEncoder, JSONDecoder> {
+    func makeClient(
+        logger: Logger = Logger(subsystem: "Poke", category: "HTTPClient"),
+    ) -> HTTPClient<JSONEncoder, JSONDecoder> {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
         let session = URLSession(configuration: configuration)
@@ -31,6 +34,7 @@ struct HTTPClientTests {
             requestEncoder: JSONEncoder(),
             responseDecoder: JSONDecoder(),
             urlSession: session,
+            logger: logger,
         )
     }
 
@@ -220,5 +224,17 @@ struct HTTPClientTests {
             }
             #expect(response.statusCode == 500)
         }
+    }
+
+    @Test
+    func `a client with its own logger sends requests`() async throws {
+        MockURLProtocol.requestHandler = { request in
+            (makeResponse(url: request.url!, statusCode: 200), Data(#"{"ok":true}"#.utf8))
+        }
+
+        let client = makeClient(logger: Logger(subsystem: "com.example.app", category: "HTTP"))
+        let ack: Ack = try await client.send(path: "status")
+
+        #expect(ack.ok)
     }
 }

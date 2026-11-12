@@ -68,6 +68,9 @@ When a `body` is sent, `Content-Type` defaults to `application/json`. Override i
 the `contentType:` parameter, or set your own `Content-Type` in the client-wide `headers` and it
 will be left untouched.
 
+Poke logs requests, responses and failures with the subsystem `Poke`. Pass your own `logger:` to
+`HTTPClient.init` to log under your app's subsystem instead.
+
 Non-2xx responses, transport failures, and encoding/decoding problems are all surfaced as
 `HTTPError`.
 
